@@ -1,0 +1,416 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>bpw2_stat3</title><meta name="generator" content="MATLAB 9.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-17"><meta name="DC.source" content="bpw2_stat3.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> bpw2_stat3(matfile)
+<span class="comment">% Words with three or more syllables</span>
+<span class="keyword">if</span> nargin &lt; 1
+    <span class="comment">% matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4-sample.mat'; % Made with token_data_bpw2.</span>
+    matfile = <span class="string">'/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4.mat'</span>; <span class="comment">% All the data.</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Load sets L to a structure. It has to be initialized first.</span>
+L = 0;
+load(matfile);
+
+<span class="comment">% Number of data points to graph</span>
+dcount = 1000;
+
+<span class="comment">% Scale for combining the two weights.</span>
+acoustic_scale = 0.083333;
+<span class="comment">% Then combine by this formulat, see</span>
+<span class="comment">% /projects/speech/sys/kaldi-master/egs/bp_ldcWestPoint/bpw2/exp/u1/decode_word_1/tab-min.awk</span>
+<span class="comment">% weight = weight1 +  acoustic_scale * weight2;</span>
+
+<span class="comment">% Duration in frames</span>
+D = cellfun(@sum,L.phonedur)';
+
+<span class="comment">% Combined weights</span>
+<span class="comment">% We are interested only in readings 1-3, but there are more for longer</span>
+<span class="comment">% words</span>
+W1 = cellfun(@(x,y) x + acoustic_scale * y,L.weight1,L.weight2,<span class="string">'UniformOutput'</span>,false)';
+
+<span class="comment">% Combined weights scaled down by duration.</span>
+<span class="comment">% This produces weights around 8.</span>
+W2 = cellfun(@(x,y) x ./ y,W1,num2cell(D),<span class="string">'UniformOutput'</span>,false);
+
+<span class="comment">% Logical indices of ultimate-stressed triplus-syllables</span>
+<span class="comment">% and penultimate-stressed triplus, and</span>
+<span class="comment">% ante-penultimate tripus</span>
+U31 = L.syl &gt; 2 &amp; L.cstress == 1;
+U32 = L.syl &gt; 2 &amp; L.cstress == 2;
+U33 = L.syl &gt; 2 &amp; L.cstress == 3;
+
+<span class="comment">% Logical indices of all tokens with three or more syllables</span>
+U3 = L.syl &gt; 2;
+
+<span class="comment">% Corresponding matrices of weights, with varying number of readings.</span>
+<span class="comment">% Cell3mat can't be applied.</span>
+U31wv = W2(U31);  <span class="comment">% 1584 3</span>
+U32wv = W2(U32);  <span class="comment">% 7331 3</span>
+U33wv = W2(U33);  <span class="comment">%  336 3</span>
+
+<span class="comment">% Select three columns and map to matrix</span>
+<span class="comment">% Each token is characterized by its weights in three readings.</span>
+U31w = cell2mat(cellfun(@(x) [x(1),x(2),x(3)], U31wv,<span class="string">'UniformOutput'</span>,false));
+U32w = cell2mat(cellfun(@(x) [x(1),x(2),x(3)], U32wv,<span class="string">'UniformOutput'</span>,false));
+U33w = cell2mat(cellfun(@(x) [x(1),x(2),x(3)], U33wv,<span class="string">'UniformOutput'</span>,false));
+
+<span class="comment">% Sy = L.syl;</span>
+<span class="comment">% Sy3 = Sy(1:100);</span>
+
+
+<span class="comment">% 3x3 contingency table</span>
+Ct = [nnz(U33w(:,3) &lt; U33w(:,1) &amp; U33w(:,3) &lt; U33w(:,2)),nnz(U33w(:,2) &lt; U33w(:,1) &amp; U33w(:,2) &lt; U33w(:,3)),nnz(U33w(:,1) &lt; U33w(:,2) &amp; U33w(:,1) &lt; U33w(:,3));
+      nnz(U32w(:,3) &lt; U32w(:,1) &amp; U32w(:,3) &lt; U32w(:,2)),nnz(U32w(:,2) &lt; U32w(:,1) &amp; U32w(:,2) &lt; U32w(:,3)),nnz(U32w(:,1) &lt; U32w(:,2) &amp; U32w(:,1) &lt; U32w(:,3));
+      nnz(U31w(:,3) &lt; U31w(:,1) &amp; U31w(:,3) &lt; U31w(:,2)),nnz(U31w(:,2) &lt; U31w(:,1) &amp; U31w(:,2) &lt; U31w(:,3)),nnz(U31w(:,1) &lt; U31w(:,2) &amp; U31w(:,1) &lt; U31w(:,3))];
+
+<span class="comment">% Put ultimate stress in first row/column instead of last.</span>
+
+Ct = rot90(Ct,2);
+disp(<span class="string">'Contingency table'</span>);
+disp(Ct);
+
+<span class="comment">% Majority class</span>
+Maj =  nnz(U32) / nnz(U3);
+disp(<span class="string">'Majority class (penultimate stress)'</span>);
+disp(Maj);
+
+<span class="comment">% Classifcation from weights</span>
+<span class="comment">% Correct guys are on the diagonal.</span>
+Wrat = (Ct(1,1) + Ct(2,2) + Ct(3,3)) / sum(sum(Ct));
+disp(<span class="string">'Classification from weights'</span>);
+disp(Wrat);
+
+disp(<span class="string">'Classification from weights mapping 3 to 2'</span>);
+disp((Ct(1,1) + Ct(2,2) + Ct(2,3)) / sum(sum(Ct)))
+
+<span class="comment">% Balanced error matrix</span>
+Ctb =  [Ct(1,:) / sum(Ct(1,:)); Ct(2,:) / sum(Ct(2,:)); Ct(3,:) / sum(Ct(3,:))];
+disp(<span class="string">'Row-normalized contingency table'</span>);
+disp(Ctb);
+
+<span class="comment">% Balanced error rate</span>
+Ber = (Ctb(1,1) + Ctb(2,2) + Ctb(3,3)) / 3;
+disp(<span class="string">'Balanced correctness rate'</span>);
+disp(Ber);
+
+disp(1);
+<span class="comment">%%%%%%%%%%</span>
+<span class="comment">% Reduce weights to one number and histogram them</span>
+<span class="comment">% Signed distances to diagonal</span>
+W21 = (U21w(1:dcount,2) - U21w(1:dcount,1)) ./ sqrt(2);
+
+W22 = (U22w(1:dcount,2) - U22w(1:dcount,1)) ./ sqrt(2);
+
+
+<span class="comment">%%%%%%%% Duration %%%%%%%%</span>
+<span class="comment">% Matrices of vowel duration</span>
+U21d = cell2mat(L.voweldur(U21)');
+U22d = cell2mat(L.voweldur(U22)');
+
+figure();
+scatter(U21d(1:dcount,1) + (0.9 * rand(1,dcount))',U21d(1:dcount,2) + (0.9 * rand(1,dcount))',<span class="string">'blue'</span>);
+axis([0 30 0 30]);
+legend(<span class="string">'lexical 21'</span>);
+xlabel(<span class="string">'initial vowel duration centiseconds (plus 0.9 noise)'</span>);
+ylabel(<span class="string">'final vowel duration centiseconds (plus 0.9 noise)'</span>);
+
+figure();
+scatter(U22d(1:dcount,1) + (0.9 * rand(1,dcount))',U22d(1:dcount,2) + (0.9 * rand(1,dcount))',<span class="string">'red'</span>);
+axis([0 30 0 30]);
+legend(<span class="string">'lexical 22'</span>);
+xlabel(<span class="string">'initial vowel duration centiseconds (plus 0.9 noise)'</span>);
+ylabel(<span class="string">'final vowel duration centiseconds (plus 0.9 noise)'</span>);
+
+disp <span class="string">1</span>;
+
+<span class="keyword">function</span> box_ratio(xmin,ymax)
+
+<span class="keyword">end</span>
+
+
+<span class="comment">% Parse a line into a key and a vector of int.</span>
+<span class="keyword">function</span> [key,a] = parse_alignment(line)
+    key = sscanf(line,<span class="string">'%s'</span>,1);
+    [~,klen] =  size(key);
+    [~,llen] = size(line);
+    line = line((klen+1):llen);
+    a = sscanf(line,<span class="string">'%d'</span>)';
+<span class="keyword">end</span>
+
+<span class="comment">% Parse a line from the table.</span>
+<span class="comment">% The input line looks like this.</span>
+<span class="comment">% f58br08b11k1-s087-2	abacaxi	abacaxi_U411	4	1	1	4.45933 4.46457 4.43014 4.40614	5115.16 5122.39 5166.43 5153.47	362_364_3</span>
+<span class="comment">% uid                   wf1     wf2             syl cit dec [w1] [w2]</span>
+<span class="comment">%   bns04_st1921_trn 1 12 ; 6 7 ; 143 3 ; 50 8 ; 60 3 ; 143 4 ; 146 13</span>
+<span class="keyword">function</span> [uid,word_form1,word_form2,syl_count,citation_stress,decode_stress,weight1,weight2] = parse_line(line)
+    part = strsplit(line,<span class="string">'\t'</span>);
+    uid = part{1};
+    word_form1 = part{2};
+    word_form2 = part{3};
+    syl_count = str2num(part{4});
+    citation_stress = str2num(part{5});
+    decode_stress = str2num(part{6});
+    weight1 = str2num(part{7});
+    weight2 = str2num(part{8});
+<span class="keyword">end</span>
+
+
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Contingency table
+        1341         122         121
+         165        6561         605
+           4           4         358
+
+Majority class (penultimate stress)
+    0.7899
+
+Classification from weights
+    0.8900
+
+Classification from weights mapping 3 to 2
+    0.9166
+
+Row-normalized contingency table
+    0.8466    0.0770    0.0764
+    0.0225    0.8950    0.0825
+    0.0109    0.0109    0.9781
+
+Balanced correctness rate
+    0.9066
+
+     1
+
+</pre><pre class="codeoutput error">Undefined function 'U21w' for input arguments of type 'double'.
+
+Error in bpw2_stat3 (line 98)
+W21 = (U21w(1:dcount,2) - U21w(1:dcount,1)) ./ sqrt(2);
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function bpw2_stat3(matfile)
+% Words with three or more syllables
+if nargin < 1
+    % matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4-sample.mat'; % Made with token_data_bpw2.
+    matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4.mat'; % All the data.
+end
+
+% Load sets L to a structure. It has to be initialized first.
+L = 0;
+load(matfile);
+
+% Number of data points to graph
+dcount = 1000;
+
+% Scale for combining the two weights.
+acoustic_scale = 0.083333;
+% Then combine by this formulat, see
+% /projects/speech/sys/kaldi-master/egs/bp_ldcWestPoint/bpw2/exp/u1/decode_word_1/tab-min.awk
+% weight = weight1 +  acoustic_scale * weight2;
+
+% Duration in frames
+D = cellfun(@sum,L.phonedur)';
+
+% Combined weights
+% We are interested only in readings 1-3, but there are more for longer
+% words
+W1 = cellfun(@(x,y) x + acoustic_scale * y,L.weight1,L.weight2,'UniformOutput',false)';
+
+% Combined weights scaled down by duration.
+% This produces weights around 8.
+W2 = cellfun(@(x,y) x ./ y,W1,num2cell(D),'UniformOutput',false);
+
+% Logical indices of ultimate-stressed triplus-syllables
+% and penultimate-stressed triplus, and
+% ante-penultimate tripus
+U31 = L.syl > 2 & L.cstress == 1;
+U32 = L.syl > 2 & L.cstress == 2;
+U33 = L.syl > 2 & L.cstress == 3;
+
+% Logical indices of all tokens with three or more syllables
+U3 = L.syl > 2;
+
+% Corresponding matrices of weights, with varying number of readings.
+% Cell3mat can't be applied.
+U31wv = W2(U31);  % 1584 3
+U32wv = W2(U32);  % 7331 3
+U33wv = W2(U33);  %  336 3
+
+% Select three columns and map to matrix
+% Each token is characterized by its weights in three readings.
+U31w = cell2mat(cellfun(@(x) [x(1),x(2),x(3)], U31wv,'UniformOutput',false));
+U32w = cell2mat(cellfun(@(x) [x(1),x(2),x(3)], U32wv,'UniformOutput',false));
+U33w = cell2mat(cellfun(@(x) [x(1),x(2),x(3)], U33wv,'UniformOutput',false));
+
+% Sy = L.syl;
+% Sy3 = Sy(1:100);
+
+
+% 3x3 contingency table
+Ct = [nnz(U33w(:,3) < U33w(:,1) & U33w(:,3) < U33w(:,2)),nnz(U33w(:,2) < U33w(:,1) & U33w(:,2) < U33w(:,3)),nnz(U33w(:,1) < U33w(:,2) & U33w(:,1) < U33w(:,3));
+      nnz(U32w(:,3) < U32w(:,1) & U32w(:,3) < U32w(:,2)),nnz(U32w(:,2) < U32w(:,1) & U32w(:,2) < U32w(:,3)),nnz(U32w(:,1) < U32w(:,2) & U32w(:,1) < U32w(:,3));
+      nnz(U31w(:,3) < U31w(:,1) & U31w(:,3) < U31w(:,2)),nnz(U31w(:,2) < U31w(:,1) & U31w(:,2) < U31w(:,3)),nnz(U31w(:,1) < U31w(:,2) & U31w(:,1) < U31w(:,3))];
+
+% Put ultimate stress in first row/column instead of last.  
+
+Ct = rot90(Ct,2); 
+disp('Contingency table');
+disp(Ct);
+
+% Majority class
+Maj =  nnz(U32) / nnz(U3);
+disp('Majority class (penultimate stress)');
+disp(Maj);
+
+% Classifcation from weights
+% Correct guys are on the diagonal.
+Wrat = (Ct(1,1) + Ct(2,2) + Ct(3,3)) / sum(sum(Ct));
+disp('Classification from weights');
+disp(Wrat);
+
+disp('Classification from weights mapping 3 to 2');
+disp((Ct(1,1) + Ct(2,2) + Ct(2,3)) / sum(sum(Ct)))
+
+% Balanced error matrix
+Ctb =  [Ct(1,:) / sum(Ct(1,:)); Ct(2,:) / sum(Ct(2,:)); Ct(3,:) / sum(Ct(3,:))];
+disp('Row-normalized contingency table');
+disp(Ctb);
+
+% Balanced error rate
+Ber = (Ctb(1,1) + Ctb(2,2) + Ctb(3,3)) / 3;
+disp('Balanced correctness rate');
+disp(Ber);
+
+disp(1);
+%%%%%%%%%%
+% Reduce weights to one number and histogram them
+% Signed distances to diagonal
+W21 = (U21w(1:dcount,2) - U21w(1:dcount,1)) ./ sqrt(2);
+
+W22 = (U22w(1:dcount,2) - U22w(1:dcount,1)) ./ sqrt(2);
+
+ 
+%%%%%%%% Duration %%%%%%%%
+% Matrices of vowel duration
+U21d = cell2mat(L.voweldur(U21)');
+U22d = cell2mat(L.voweldur(U22)');
+
+figure();
+scatter(U21d(1:dcount,1) + (0.9 * rand(1,dcount))',U21d(1:dcount,2) + (0.9 * rand(1,dcount))','blue');
+axis([0 30 0 30]);
+legend('lexical 21');
+xlabel('initial vowel duration centiseconds (plus 0.9 noise)');
+ylabel('final vowel duration centiseconds (plus 0.9 noise)');
+
+figure();
+scatter(U22d(1:dcount,1) + (0.9 * rand(1,dcount))',U22d(1:dcount,2) + (0.9 * rand(1,dcount))','red');
+axis([0 30 0 30]);
+legend('lexical 22');
+xlabel('initial vowel duration centiseconds (plus 0.9 noise)');
+ylabel('final vowel duration centiseconds (plus 0.9 noise)'); 
+
+disp 1;
+
+function box_ratio(xmin,ymax)
+        
+end
+
+
+% Parse a line into a key and a vector of int.
+function [key,a] = parse_alignment(line)
+    key = sscanf(line,'%s',1);
+    [~,klen] =  size(key);
+    [~,llen] = size(line);
+    line = line((klen+1):llen);
+    a = sscanf(line,'%d')';
+end
+
+% Parse a line from the table.
+% The input line looks like this.
+% f58br08b11k1-s087-2	abacaxi	abacaxi_U411	4	1	1	4.45933 4.46457 4.43014 4.40614	5115.16 5122.39 5166.43 5153.47	362_364_3
+% uid                   wf1     wf2             syl cit dec [w1] [w2]
+%   bns04_st1921_trn 1 12 ; 6 7 ; 143 3 ; 50 8 ; 60 3 ; 143 4 ; 146 13
+function [uid,word_form1,word_form2,syl_count,citation_stress,decode_stress,weight1,weight2] = parse_line(line)
+    part = strsplit(line,'\t');
+    uid = part{1};
+    word_form1 = part{2};
+    word_form2 = part{3};
+    syl_count = str2num(part{4});
+    citation_stress = str2num(part{5});
+    decode_stress = str2num(part{6});
+    weight1 = str2num(part{7});
+    weight2 = str2num(part{8});
+end
+
+
+
+end
+
+
+##### SOURCE END #####
+--></body></html>
