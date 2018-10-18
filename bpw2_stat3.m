@@ -108,7 +108,7 @@ scatter3(U32w(1:200,1),U32w(1:200,2),U32w(1:200,3),10,'b');
 scatter3(U31w(1:200,1),U31w(1:200,2),U31w(1:200,3),10,'r');
 rotate3d;
 
-disp(1);
+%disp(1);
 
 %%%%%%%% Duration %%%%%%%%
 % Vowel durations. L.voweldur is not of uniform length,
@@ -119,9 +119,9 @@ U31d = cell2mat(cellfun(@(x) [x(length(x)),x(length(x)-1),x(length(x)-2)], L.vow
 U32d = cell2mat(cellfun(@(x) [x(length(x)),x(length(x)-1),x(length(x)-2)], L.voweldur(U32)','UniformOutput',false));
 U33d = cell2mat(cellfun(@(x) [x(length(x)),x(length(x)-1),x(length(x)-2)], L.voweldur(U33)','UniformOutput',false));
 
-disp(1);
+%disp(1);
 
-%
+% Number of data points to display per stress type.
 dcount = 200;
 
 % Rotatable 3D scatter plots of vowel durations for three stress classes
@@ -134,27 +134,7 @@ scatter3(U31d(1:dcount,1)+(0.4 * rand(1,dcount))',U31d(1:dcount,2)+(0.4 * rand(1
 rotate3d;
 
 disp(1);
-
-figure();
-scatter(U21d(1:dcount,1) + (0.9 * rand(1,dcount))',U21d(1:dcount,2) + (0.9 * rand(1,dcount))','blue');
-axis([0 30 0 30]);
-legend('lexical 21');
-xlabel('initial vowel duration centiseconds (plus 0.9 noise)');
-ylabel('final vowel duration centiseconds (plus 0.9 noise)');
-
-figure();
-scatter(U22d(1:dcount,1) + (0.9 * rand(1,dcount))',U22d(1:dcount,2) + (0.9 * rand(1,dcount))','red');
-axis([0 30 0 30]);
-legend('lexical 22');
-xlabel('initial vowel duration centiseconds (plus 0.9 noise)');
-ylabel('final vowel duration centiseconds (plus 0.9 noise)'); 
-
-disp 1;
-
-function box_ratio(xmin,ymax)
-        
-end
-
+ 
 
 % Parse a line into a key and a vector of int.
 function [key,a] = parse_alignment(line)
