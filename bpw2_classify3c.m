@@ -1,4 +1,4 @@
-function R = bpw2_classify3b(matfile)
+function R = bpw2_classify3c(matfile)
 % As before, but hand-code 8-fold crossvalidation in order to compute
 % balanced error rate.
        
