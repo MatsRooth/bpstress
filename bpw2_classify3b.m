@@ -1,6 +1,5 @@
-function R = bpw2_classify3(matfile)
-% Use a single weight feature
-       
+function R = bpw2_classify3b(matfile)
+% As before, but do cross-validation following https://www.mathworks.com/help/stats/fitcecoc.html.
        
 % Initialize the result.
 R = {};
@@ -83,20 +82,53 @@ Y = Y(U3);
 R.X = X;
 R.Y = Y;
 
+
 % Fit 3-class svm using just weights, just durations
 % and both. Durations help a bit.
 
-R.svm1 = fitcecoc(X(:,1:3),Y);
-R.svm2 = fitcecoc(X(:,4:6),Y);
-R.svm3 = fitcecoc(X,Y);
+R.svm1 = fitcecoc(X(:,1:3),Y); % Cepstral weight
+R.svm2 = fitcecoc(X(:,4:6),Y); % Duration
+R.svm3 = fitcecoc(X,Y);        % Both
+
+
 
 % Evaluate on training data.
-resubLoss(R.svm1) % 0.0626  weights
-resubLoss(R.svm2) % 0.2101  durations
-resubLoss(R.svm3) % 0.0507  both
+% resubLoss(R.svm1) % 0.0626  weights
+% resubLoss(R.svm2) % 0.2101  durations
+% resubLoss(R.svm3) % 0.0507  both
 disp(1);
 
- 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  Crossvalidate following
+%  https://www.mathworks.com/help/stats/fitcecoc.html.
+
+% Template
+t1 = templateSVM('Standardize',1);
+t2 = templateSVM('Standardize',1);
+t3 = templateSVM('Standardize',1);
+
+% Train the ECOC classifier
+
+mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1);
+mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2);
+mdl3 = fitcecoc(X,Y,'Learners',t3);
+    
+% Cross-validate Mdl using 10-fold cross-validation.
+
+cmdl1 = crossval(mdl1);
+cmdl2 = crossval(mdl2);
+cmdl3 = crossval(mdl3);
+
+loss1 = kfoldLoss(cmdl1)
+% loss1 = 0.0560
+loss2 = kfoldLoss(cmdl2)
+% loss2 = 0.2101
+loss3 = kfoldLoss(cmdl3)
+% loss3 = 0.0467 0.0465
+
+disp(1);
+
 % Parse a line into a key and a vector of int.
 function [key,a] = parse_alignment(line)
     key = sscanf(line,'%s',1);

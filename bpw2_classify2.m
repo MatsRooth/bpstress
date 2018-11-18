@@ -71,6 +71,8 @@ X = [V2w,U2d];
 
 Y = U21(U2);
 
+disp(1);
+
 % Reduce the number of data points
 %X = X(1:1000,:);
 %Y = Y(1:1000);
