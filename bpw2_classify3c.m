@@ -8,6 +8,7 @@ R = {};
 if nargin < 1
     %matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4-sample.mat'; % Made with token_data_bpw2.
     matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4.mat'; % All the data, 15388 bisyllables
+    savename = '/local/matlab/bpstress/bpw2_classify3c';
 end
 
 % Load sets L to a structure. It has to be initialized first.
@@ -68,7 +69,7 @@ U32d = cell2mat(cellfun(@(x) [x(length(x)),x(length(x)-1),x(length(x)-2)], L.vow
 U33d = cell2mat(cellfun(@(x) [x(length(x)),x(length(x)-1),x(length(x)-2)], L.voweldur(U33)','UniformOutput',false));
 U3d = cell2mat(cellfun(@(x) [x(length(x)),x(length(x)-1),x(length(x)-2)], L.voweldur(U3)','UniformOutput',false));
 
-% Feature matrix, with six colums. Row indices are items.
+% Feature matrix, with six columns. Row indices are items.
 X = [U3w,U3d];
 
 
@@ -100,30 +101,46 @@ dim = length(X(:,1));
     end
 
 disp(dim);
-train1 = trainfold(1);
-test1 = testfold(1);
-train2 = trainfold(2);
-test2 = testfold(2);
-train8 = trainfold(8);
-test8 = testfold(8);
+ 
  
 % Fit 3-class svm using just weights and durations
 % for each fold.
 
-R.svm = cell(1,8);
- 
+% Just weights
+R.mw = cell(1,8);
+% Just durations
+R.md = cell(1,8);
+% Weights and durations
+R.mwd = cell(1,8);
+
+% The above could be grouped into cell(3,8).
+
+% Fit 3-class SVM for each fold, and
+% each subset of columns.
 for k = 1:8
    disp(k);
-   R.svm{k} = fitcecoc(X(trainfold(k),:),Y(trainfold(k),:));
+   R.mw{k} = fitcecoc(X(trainfold(k),1:3),Y(trainfold(k)));
+   R.md{k} = fitcecoc(X(trainfold(k),4:6),Y(trainfold(k)));
+   R.mwd{k} = fitcecoc(X(trainfold(k),:),Y(trainfold(k)));
 end
 
 % Predicted labels for test folds
-R.label = cell(1,8);
+R.label_w = cell(1,8);
+R.label_d = cell(1,8);
+R.label_wd = cell(1,8);
+
 for k = 1:8
    disp(k);
-   R.label{k} = predict(R.svm{k},X(testfold(k),:));
+   R.label_w{k} = predict(R.mw{k},X(testfold(k),1:3));
+   R.label_d{k} = predict(R.md{k},X(testfold(k),4:6));
+   R.label_wd{k} = predict(R.mwd{k},X(testfold(k),:));
 end
+% First 20 labels in 1st fold: R.label_wd{1}(1:20)'
 
+% Save R
+% This resulted in savename.mat. I moved it to bpw2_classify3c.mat.
+%save savename R;
+save(savename,'R');
 
 disp(1);  
 
