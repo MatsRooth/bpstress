@@ -110,22 +110,29 @@ t3 = templateSVM('Standardize',1);
 
 % Train the ECOC classifier
 
-mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1);
-mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2);
-mdl3 = fitcecoc(X,Y,'Learners',t3);
-    
+%mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1);
+%mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2);
+%mdl3 = fitcecoc(X,Y,'Learners',t3);
+
+% Thu Nov 22 09:29:01 EST 2018
+% Try it with uniform prior, see https://www.mathworks.com/help/stats/fitcecoc.html
+mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1,'Prior','uniform');
+mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2,'Prior','uniform');
+mdl3 = fitcecoc(X,Y,'Learners',t3,'Prior','uniform');
+
 % Cross-validate Mdl using 10-fold cross-validation.
 
 cmdl1 = crossval(mdl1);
 cmdl2 = crossval(mdl2);
 cmdl3 = crossval(mdl3);
 
-loss1 = kfoldLoss(cmdl1)
-% loss1 = 0.0560
-loss2 = kfoldLoss(cmdl2)
-% loss2 = 0.2101
-loss3 = kfoldLoss(cmdl3)
-% loss3 = 0.0467 0.0465
+%                           basic   uniform
+loss1 = kfoldLoss(cmdl1) %  0.0560  0.0758
+loss2 = kfoldLoss(cmdl2) %  0.2101  0.3501
+loss3 = kfoldLoss(cmdl3) %  0.0467  0.0587
+%                           0.0465
+
+% What is the major-class baseline? Is basic weight-only any better?
 
 disp(1);
 

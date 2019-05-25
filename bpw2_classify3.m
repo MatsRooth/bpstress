@@ -1,5 +1,6 @@
 function R = bpw2_classify3(matfile)
-% Use a single weight feature
+% Classify three stress loci using 3 class SVM.
+% In this version, evaluate on training data.
        
        
 % Initialize the result.
@@ -86,14 +87,22 @@ R.Y = Y;
 % Fit 3-class svm using just weights, just durations
 % and both. Durations help a bit.
 
-R.svm1 = fitcecoc(X(:,1:3),Y);
-R.svm2 = fitcecoc(X(:,4:6),Y);
-R.svm3 = fitcecoc(X,Y);
+% Thu Nov 22 08:14:48 EST 2018
+%    Try it with uniform prior.
+R.svm1 = fitcecoc(X(:,1:3),Y,'Prior','uniform');
+R.svm2 = fitcecoc(X(:,4:6),Y,'Prior','uniform');
+R.svm3 = fitcecoc(X,Y,'Prior','uniform');
 
-% Evaluate on training data.
-resubLoss(R.svm1) % 0.0626  weights
-resubLoss(R.svm2) % 0.2101  durations
-resubLoss(R.svm3) % 0.0507  both
+% Evaluate on 
+% training data.    basic              uniform
+resubLoss(R.svm1) % 0.0626  weights    0.0754
+resubLoss(R.svm2) % 0.2101  durations  0.3454
+resubLoss(R.svm3) % 0.0507  both       0.0597
+% The goodish performance of weight-only in the basic model is
+% partially a matter of modeling the major class. For what
+% we are interested in the uniform model is more relevant.
+% It needs to be checked what uniform means.
+
 disp(1);
 
  

@@ -86,6 +86,8 @@ R.Y = Y;
 
 % 9821 items
 dim = length(X(:,1));
+R.dim = dim;
+
 
 % The noble eight-fold way.
 % The functions return logical vectors, giving the indices of
@@ -106,79 +108,47 @@ disp(dim);
 % Fit 3-class svm using just weights and durations
 % for each fold.
 
-% Just weights
-R.mw = cell(1,8);
-% Just durations
-R.md = cell(1,8);
-% Weights and durations
-R.mwd = cell(1,8);
-
-% The above could be grouped into cell(3,8).
+% Cell array of models
+% Columns are 8 folds
+% Rows are
+%   1 just weight
+%   2 just duration
+%   3 both
+R.m = cell(3,8);
 
 % Fit 3-class SVM for each fold, and
 % each subset of columns.
 for k = 1:8
    disp(k);
-   R.mw{k} = fitcecoc(X(trainfold(k),1:3),Y(trainfold(k)));
-   R.md{k} = fitcecoc(X(trainfold(k),4:6),Y(trainfold(k)));
-   R.mwd{k} = fitcecoc(X(trainfold(k),:),Y(trainfold(k)));
+   R.m{1,k} = fitcecoc(X(trainfold(k),1:3),Y(trainfold(k)));
+   R.m{2,k} = fitcecoc(X(trainfold(k),4:6),Y(trainfold(k)));
+   R.m{3,k} = fitcecoc(X(trainfold(k),:),Y(trainfold(k)));
 end
 
 % Predicted labels for test folds
-R.label_w = cell(1,8);
-R.label_d = cell(1,8);
-R.label_wd = cell(1,8);
+%R.label_w = cell(1,8);
+%R.label_d = cell(1,8);
+%R.label_wd = cell(1,8);
+R.l = cell(3,8);
 
 for k = 1:8
    disp(k);
-   R.label_w{k} = predict(R.mw{k},X(testfold(k),1:3));
-   R.label_d{k} = predict(R.md{k},X(testfold(k),4:6));
-   R.label_wd{k} = predict(R.mwd{k},X(testfold(k),:));
+   R.l{1,k} = predict(R.m{1,k},X(testfold(k),1:3));
+   R.l{2,k} = predict(R.m{2,k},X(testfold(k),4:6));
+   R.l{3,k} = predict(R.m{3,k},X(testfold(k),:));
 end
-% First 20 labels in 1st fold: R.label_wd{1}(1:20)'
+% First 20 labels in 1st fold: R.l{3,1}(1:20)'
 
 % Save R
-% This resulted in savename.mat. I moved it to bpw2_classify3c.mat.
-%save savename R;
 save(savename,'R');
+
+
+
 
 disp(1);  
 
 %%% ===> Next, compute the 3x3 contingency table.
  
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  Crossvalidate following
-%  https://www.mathworks.com/help/stats/fitcecoc.html.
-
-% Template
-t1 = templateSVM('Standardize',1);
-t2 = templateSVM('Standardize',1);
-t3 = templateSVM('Standardize',1);
-
-% Train the ECOC classifier
-
-mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1);
-mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2);
-mdl3 = fitcecoc(X,Y,'Learners',t3);
-    
-% Cross-validate Mdl using 10-fold cross-validation.
-
-cmdl1 = crossval(mdl1);
-cmdl2 = crossval(mdl2);
-cmdl3 = crossval(mdl3);
-
-loss1 = kfoldLoss(cmdl1)
-% loss1 = 0.0560
-loss2 = kfoldLoss(cmdl2)
-% loss2 = 0.2101
-loss3 = kfoldLoss(cmdl3)
-% loss3 = 0.0467 0.0465
-
-disp(1);
-
 % Parse a line into a key and a vector of int.
 function [key,a] = parse_alignment(line)
     key = sscanf(line,'%s',1);
@@ -205,19 +175,7 @@ function [uid,word_form1,word_form2,syl_count,citation_stress,decode_stress,weig
     weight2 = str2num(part{8});
 end
 
-% Result of 'OptimizeHyperparameters','all'
-% Best estimated feasible point (according to models):
-%    BoxConstraint    KernelScale    KernelFunction    PolynomialOrder    Standardize
-%    _____________    ___________    ______________    _______________    ___________
-%
-%       6.9424            NaN          polynomial             2              true    
-%
-%Estimated objective function value = 0.082355
-%Estimated function evaluation time = 0.48633
-
-% 0.0846 weight
-% 0.3035 duration
-% 0.0871 both--it's a bit worse
+ 
 
 end
 
