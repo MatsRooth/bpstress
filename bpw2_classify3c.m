@@ -1,21 +1,24 @@
 function R = bpw2_classify3c(matfile)
 % As before, but hand-code 8-fold crossvalidation in order to compute
 % balanced error rate.
-       
+
+% After running, do this to examine the result R.
+% load('/local/matlab/bpstress/bpw2_classify3c1.mat')
+
 % Initialize the result.
 R = {};
 % The initial part of this is like bpw2_stat1.
 if nargin < 1
     %matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4-sample.mat'; % Made with token_data_bpw2.
-    matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4.mat'; % All the data, 15388 bisyllables
-    savename = '/local/matlab/bpstress/bpw2_classify3c';
+    matfile = '/local/matlab/bpstress/data-bpn/tab4.mat'; % All the data, 15388 bisyllables
+    savename = '/local/matlab/bpstress/bpw2_classify3c1';
 end
 
 % Load sets L to a structure. It has to be initialized first.
 L = 0;
 load(matfile);
 
-% Scale for combining the two weights.
+% Scale for combining the two weights.W1
 acoustic_scale = 0.083333;
 % Then combine by this formula, see
 % /projects/speech/sys/kaldi-master/egs/bp_ldcWestPoint/bpw2/exp/u1/decode_word_1/tab-min.awk
@@ -118,6 +121,7 @@ R.m = cell(3,8);
 
 % Fit 3-class SVM for each fold, and
 % each subset of columns.
+% This prints the index of the fold from 1 to 8 as it is executing.
 for k = 1:8
    disp(k);
    R.m{1,k} = fitcecoc(X(trainfold(k),1:3),Y(trainfold(k)));
@@ -143,8 +147,7 @@ end
 save(savename,'R');
 
 
-
-
+% Set a breakpoint here to examine result
 disp(1);  
 
 %%% ===> Next, compute the 3x3 contingency table.

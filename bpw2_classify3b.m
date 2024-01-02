@@ -1,17 +1,26 @@
 function R = bpw2_classify3b(matfile)
 % As before, but do cross-validation following https://www.mathworks.com/help/stats/fitcecoc.html.
-       
+
+% After running, do this to examine the result R.
+% load('/local/matlab/bpstress/bpw2_classify3c1.mat')
+
 % Initialize the result.
 R = {};
 % The initial part of this is like bpw2_stat1.
 if nargin < 1
     %matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4-sample.mat'; % Made with token_data_bpw2.
-    matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4.mat'; % All the data, 15388 bisyllables
+    matfile = '/local/matlab/bpstress/data-bpn/tab4.mat'; % All the data, 15388 bisyllables
+    savename = '/local/matlab/bpstress/data-bpn/bpw2_classify3b';
 end
+
+
 
 % Load sets L to a structure. It has to be initialized first.
 L = 0;
 load(matfile);
+
+% Initialize the result.
+R = {};
 
 % Scale for combining the two weights.
 acoustic_scale = 0.083333;
@@ -82,6 +91,8 @@ Y = Y(U3);
 R.X = X;
 R.Y = Y;
 
+dim = length(X(:,1));
+R.dim = dim;
 
 % Fit 3-class svm using just weights, just durations
 % and both. Durations help a bit.
@@ -115,24 +126,29 @@ t3 = templateSVM('Standardize',1);
 %mdl3 = fitcecoc(X,Y,'Learners',t3);
 
 % Thu Nov 22 09:29:01 EST 2018
-% Try it with uniform prior, see https://www.mathworks.com/help/stats/fitcecoc.html
-mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1,'Prior','uniform');
-mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2,'Prior','uniform');
-mdl3 = fitcecoc(X,Y,'Learners',t3,'Prior','uniform');
+% The prior can be 'empirical' (default) or 'uniform', see https://www.mathworks.com/help/stats/fitcecoc.html
+R.mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1,'Prior','empirical');
+R.mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2,'Prior','empirical');
+R.mdl3 = fitcecoc(X,Y,'Learners',t3,'Prior','empirical');
 
 % Cross-validate Mdl using 10-fold cross-validation.
 
-cmdl1 = crossval(mdl1);
-cmdl2 = crossval(mdl2);
-cmdl3 = crossval(mdl3);
+R.cmdl1 = crossval(R.mdl1);
+R.cmdl2 = crossval(R.mdl2);
+R.cmdl3 = crossval(R.mdl3);
 
+% The following values were obtained on Jan 2, 2024
 %                           basic   uniform
-loss1 = kfoldLoss(cmdl1) %  0.0560  0.0758
-loss2 = kfoldLoss(cmdl2) %  0.2101  0.3501
-loss3 = kfoldLoss(cmdl3) %  0.0467  0.0587
-%                           0.0465
+R.loss1 = kfoldLoss(R.cmdl1) %  0.0556  0.0753
+R.loss2 = kfoldLoss(R.cmdl2) %  0.2101  0.3465
+R.loss3 = kfoldLoss(R.cmdl3) %  0.0461  0.0582
 
 % What is the major-class baseline? Is basic weight-only any better?
+
+% Save R
+% To see R,
+%   load('/local/matlab/bpstress/bpw2_classify3c1.mat')
+save(savename,'R');
 
 disp(1);
 
