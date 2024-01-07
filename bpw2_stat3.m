@@ -64,7 +64,7 @@ Ct = [nnz(U33w(:,3) < U33w(:,1) & U33w(:,3) < U33w(:,2)),nnz(U33w(:,2) < U33w(:,
 % Put ultimate stress in first row/column instead of last.  
 
 Ct = rot90(Ct,2); 
-disp('Contingency table');
+disp('Contingency table---ultimate stress is index 1, etc');
 disp(Ct);
 
 % Majority class
@@ -79,6 +79,7 @@ disp('Classification from weights');
 disp(Wrat);
 
 disp('Classification from weights mapping 3 to 2');
+disp('  note thought that accuracy on 3 is .98')
 disp((Ct(1,1) + Ct(2,2) + Ct(2,3)) / sum(sum(Ct)))
 
 % Balanced error matrix
@@ -88,7 +89,7 @@ disp(Ctb);
 
 % Balanced error rate
 Ber = (Ctb(1,1) + Ctb(2,2) + Ctb(3,3)) / 3;
-disp('Balanced correctness rate');
+disp('Balanced correctness rate---not so different');
 disp(Ber);
 
 disp(1);

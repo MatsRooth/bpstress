@@ -2,7 +2,7 @@ function R = bpw2_classify3b(matfile)
 % As before, but do cross-validation following https://www.mathworks.com/help/stats/fitcecoc.html.
 
 % After running, do this to examine the result R.
-% load('/local/matlab/bpstress/bpw2_classify3c1.mat')
+% load('/local/matlab/bpstress/data-bpn/bpw2_classify3b_default.mat')
 
 % Initialize the result.
 R = {};
@@ -10,7 +10,7 @@ R = {};
 if nargin < 1
     %matfile = '/local/matlab/Kaldi-alignments-matlab/data-bpn/tab4-sample.mat'; % Made with token_data_bpw2.
     matfile = '/local/matlab/bpstress/data-bpn/tab4.mat'; % All the data, 15388 bisyllables
-    savename = '/local/matlab/bpstress/data-bpn/bpw2_classify3b';
+    savename = '/local/matlab/bpstress/data-bpn/bpw2_classify3b_default';
 end
 
 
@@ -22,8 +22,11 @@ load(matfile);
 % Initialize the result.
 R = {};
 
-% Scale for combining the two weights.
+% Scale for combining the two weights.  The first is the default in the
+% Kaldi recipe. 
 acoustic_scale = 0.083333;
+% acoustic_scale = 1.0;
+
 % Then combine by this formula, see
 % /projects/speech/sys/kaldi-master/egs/bp_ldcWestPoint/bpw2/exp/u1/decode_word_1/tab-min.awk
 % weight = weight1 +  acoustic_scale * weight2;
@@ -33,10 +36,19 @@ D = cellfun(@sum,L.phonedur)';
 
 % Combined weights
 W1 = cellfun(@(x,y) x + acoustic_scale * y,L.weight1,L.weight2,'UniformOutput',false)';
+% W0 = cellfun(@(x,y) acoustic_scale * y,L.weight1,L.weight2,'UniformOutput',false)';  % Ignores x
+% W3 = cellfun(@(x,y) x,L.weight1,L.weight2,'UniformOutput',false)';  % Ignores y
+% W1 = W3;
 
-% Combined weights scaled down by duration.
+% Combined weights scaled down by duration of the word
 % This produces weights in the range 7.0 to 9.5.
 W2 = cellfun(@(x,y) x ./ y,W1,num2cell(D),'UniformOutput',false);
+% W2 = W3; 
+
+% To use W1 instead of W2
+% W2 = W1;
+% To use W0 instead of W2. Ignore the transition weight.
+% W2 = W0;
 
 % This part is like bpw2_stat3.m
 % Logical indices of ultimate-stressed triplus-syllables
@@ -49,6 +61,11 @@ U33 = L.syl > 2 & L.cstress == 3;
 % Logical indices of all tokens with three or more syllables
 U3 = L.syl > 2;
 
+R.U3 = U3;
+R.U31 = U31;
+R.U32 = U32;
+R.U33 = U33;
+
 % Indices that are 1 in U3, for mapping back to L.
 I3 = find(U3);
 
@@ -58,6 +75,7 @@ U31wv = W2(U31);  % 1584 3
 U32wv = W2(U32);  % 7331 3
 U33wv = W2(U33);  %  336 3
 U3wv = W2(U3);
+
 
 % Select three columns and map to matrix
 % Each token is characterized by its weights in three readings.
@@ -115,9 +133,10 @@ disp(1);
 %  https://www.mathworks.com/help/stats/fitcecoc.html.
 
 % Template
-t1 = templateSVM('Standardize',1);
-t2 = templateSVM('Standardize',1);
-t3 = templateSVM('Standardize',1);
+% KernelFunction is default 'linear', 'gaussian', or 'polynomial'
+t1 = templateSVM('Standardize',1,'KernelFunction','polynomial');
+t2 = templateSVM('Standardize',1,'KernelFunction','polynomial');
+t3 = templateSVM('Standardize',1,'KernelFunction','polynomial');
 
 % Train the ECOC classifier
 
@@ -129,7 +148,7 @@ t3 = templateSVM('Standardize',1);
 % The prior can be 'empirical' (default) or 'uniform', see https://www.mathworks.com/help/stats/fitcecoc.html
 R.mdl1 = fitcecoc(X(:,1:3),Y,'Learners',t1,'Prior','empirical');
 R.mdl2 = fitcecoc(X(:,4:6),Y,'Learners',t2,'Prior','empirical');
-R.mdl3 = fitcecoc(X,Y,'Learners',t3,'Prior','empirical');
+R.mdl3 = fitcecoc(X,Y,'Learners',t3,'Prior','empirical','Verbose',2);
 
 % Cross-validate Mdl using 10-fold cross-validation.
 
@@ -137,17 +156,49 @@ R.cmdl1 = crossval(R.mdl1);
 R.cmdl2 = crossval(R.mdl2);
 R.cmdl3 = crossval(R.mdl3);
 
-% The following values were obtained on Jan 2, 2024
+% The following values were obtained on Jan 4, 2024
+% using acoustic_scale = 
 %                           basic   uniform
-R.loss1 = kfoldLoss(R.cmdl1) %  0.0556  0.0753
-R.loss2 = kfoldLoss(R.cmdl2) %  0.2101  0.3465
-R.loss3 = kfoldLoss(R.cmdl3) %  0.0461  0.0582
+R.loss1 = kfoldLoss(R.cmdl1); %  0.0557  0.0753
+R.loss2 = kfoldLoss(R.cmdl2); %  0.2101  0.3465
+R.loss3 = kfoldLoss(R.cmdl3) %  0.0457  0.0582
+
+% loss2 could simply be the major class baseline
+% 1 - sum(U32) / sum(U3) = 0.2101
+% Error reduction
+% 1 - 0.0457 / 0.0557 = 0.1795
+
+
+% With acoustic_scale = 1.0
+% loss1: 0.0595
+% loss2: 0.2101
+% loss3: 0.0477
+
+% With acoustic_scale = 0.5
+% loss1: 0.0587
+% loss2: 0.2101
+% loss3: 0.0472
+
+% Unscaled W0
+% loss1: 0.1166
+% loss2: 0.2101
+% loss3: 0.0811
+% W0 scaled by duration
+%    loss1: 0.0595
+%    loss2: 0.2101
+%    loss3: 0.0475
+
+% W3, terrible
+% But it shows the Kaldi duration model is comparatively good?
+% loss1: 0.1903
+% loss2: 0.2101
+% loss3: 0.1563
 
 % What is the major-class baseline? Is basic weight-only any better?
 
 % Save R
 % To see R,
-%   load('/local/matlab/bpstress/bpw2_classify3c1.mat')
+%   load('/local/matlab/bpstress/bpw2_classify3b_default.mat')
 save(savename,'R');
 
 disp(1);
